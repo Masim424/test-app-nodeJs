@@ -1,6 +1,10 @@
 
 name: CI/CD pipeline
 
+env:
+   ip: ${{ secrets.SERVER_IP}}
+   password: ${{ secrets.SERVER_PASSWORD}}
+
 on:
   push:
     branches: [ "main" ]
