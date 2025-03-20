@@ -16,7 +16,7 @@ app.use("/api/products", productRoute);
 
 
 app.get("/", (req, res) => {
-  res.send("Hello from Node API Server Updated");
+  res.send("Hello from Node API Updated For Nginx Web Server");
 });
 
 
