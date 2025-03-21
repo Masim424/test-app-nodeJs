@@ -28,18 +28,27 @@ jobs:
     - name: Build project (if applicable)
       run: npm run build --if-present
 
-    - name: Deploy to server
+    - name: Debug Variables (Check if SERVER_USER and SERVER_IP are set)
+      run: |
+        echo "SERVER_IP: $SERVER_IP"
+        echo "SERVER_USER: $SERVER_USER"
+      env:
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+
+    - name: Deploy to VPS
       env: 
-        SSH_SERVER_IP: ${{ secrets.SERVER_IP }}
-        SSH_SERVER_USER: ${{ secrets.SSH_SERVER_USER }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SERVER_IP: ${{ secrets.SERVER_IP }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        SSH_PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
       run: |
         echo "$SSH_PRIVATE_KEY" > private_key.pem
         chmod 600 private_key.pem
 
         echo "Deploying to $SERVER_IP"
-        ssh -o StrictHostKeyChecking=no -i private_key.pem $SERVER_USER@$SERVER_IP << 'EOF'
-          cd /path/to/your/project
+
+        ssh -o StrictHostKeyChecking=no -i private_key.pem "$SERVER_USER@$SERVER_IP" << 'EOF'
+          cd /root/test-app-nodeJs
           git pull origin main
           npm ci
           npm run build
@@ -47,4 +56,3 @@ jobs:
         EOF
 
         rm -f private_key.pem
-
