@@ -15,36 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up SSH key for deployment
-        run: |
-          echo "$SSH_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
+      - name: Deploy to server
         env:
-          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-
-      - name: Deploy to VPS
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
         run: |
-          echo "Deploying to VPS..."
-          ssh -o StrictHostKeyChecking=no -i private_key.pem root@138.197.144.247 << 'EOF'
-            # Navigate to your project directory
-            cd /root/test-app-nodeJs
-
-            # Pull the latest code from the main branch
-            git pull origin main
-
-            # Install dependencies
-            npm ci
-
-            # Build the project (if applicable)
-            npm run build --if-present
-
-            # Restart the app using pm2
-            pm2 restart app || pm2 start app.js --name "app"
-
-          EOF
-        env:
-          SERVER_IP: 138.197.144.247
-          SERVER_USER: root
-          
-      - name: Clean up SSH private key
-        run: rm -f private_key.pem
+          # Your deployment script here
+          echo "Deploying to $SERVER_IP with password $SERVER_PASSWORD"
