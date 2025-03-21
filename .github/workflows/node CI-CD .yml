@@ -1,24 +1,58 @@
-name: CI/CD Pipeline
+name: CI/CD pipeline for node.js
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - main
+    branches: [ "main"]
 
 jobs:
-  deploy:
+  build-and-test:
+    name: Build & Test Node.js App
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy to server
-        env:
-          SERVER_IP: ${{ secrets.SERVER_IP }}
-          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build-and-test  # Only runs if tests pass
+    if: github.ref == 'refs/heads/main'  # Deploy only on main branch
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up SSH Key
         run: |
-          # Your deployment script here
-          echo "Deploying to $SERVER_IP with password $SERVER_PASSWORD"
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /root/app-nodeJs  # Change to your app directory
+            git pull origin main  # Pull latest changes
+            npm install --production  # Install dependencies
+            pm2 restart app || pm2 start index.js --name "test-app-nodeJs"  # Restart or start the app
+          EOF
