@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -27,22 +26,22 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
 
-      # Setup SSH Key to connect to VPS
-      - name: Set Up SSH Key
+      - name: Deploy to Server
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{secrets.SERVER_USER}}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
-      # Deploy to VPS
-      - name: Deploy to VPS
-        run: |
-          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
-            cd /root/  # Adjust to your app directory
-            git pull origin main  # Pull latest changes
-            npm install --production  # Install dependencies
-            pm2 restart app || pm2 start index.js --name "tes-app-nodeJs"  # Restart or start app
+          echo "$SSH_PRIVATE_KEY" > ~/githubactions
+          chmod 600 ~/githubactions
+          ssh -o StrictHostKeyChecking=no -i ~/githubactions P << 'EOF'
+            cd /root/myapp
+            git pull origin main
+            npm install
+            npm run build
+            pm2 restart all
           EOF
+
 
   
