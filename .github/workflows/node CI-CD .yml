@@ -27,14 +27,20 @@ jobs:
       - run: npm run build --if-present
 
       - name: Deploy to Server
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 "$SERVER_USER@$SERVER_IP" << 'EOF'
             cd /root/myapp
             git pull origin main
             npm install
             npm run build
             pm2 restart all
+          EOF
+
