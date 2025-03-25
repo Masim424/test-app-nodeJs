@@ -33,14 +33,19 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          echo "$SSH_PRIVATE_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
+          # Add host to known_hosts to prevent interactive prompt
+          ssh-keyscan -H "$SERVER_IP" >> ~/.ssh/known_hosts
+
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 "$SERVER_USER@$SERVER_IP" << 'EOF'
-            cd /root/myapp
+            set -e  # Stop on error
+            cd /root/myapp || { echo "Directory not found!"; exit 1; }
             git pull origin main
             npm install
             npm run build
             pm2 restart all
           EOF
+
 
