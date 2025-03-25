@@ -33,7 +33,7 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
+          echo "$SSH_PRIVATE_KEY" /root/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
           # Add host to known_hosts to prevent interactive prompt
