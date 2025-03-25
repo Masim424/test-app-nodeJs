@@ -32,9 +32,7 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-         sudo mkdir -p /home/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519 
+          
 
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519  "$SERVER_USER@$SERVER_IP" << 'EOF'
             cd /root/myapp
